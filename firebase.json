@@ -12,5 +12,20 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "FocusApp",
+        "supportEmail": "laurenkimura23@gmail.com"
+      }
+    }
   }
 }
