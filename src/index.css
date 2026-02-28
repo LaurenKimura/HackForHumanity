@@ -5,7 +5,7 @@ body {
   min-height: 100vh;
   min-width: 320px;
   font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+  background: url('/background.png') no-repeat center center / cover;
   color: #0f172a;
 }
 
