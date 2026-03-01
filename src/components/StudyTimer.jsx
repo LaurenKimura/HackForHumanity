@@ -73,7 +73,7 @@ function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, on
       </div>
 
       <p className="mt-4 text-center text-xs text-slate-500">
-        1 minute studied = 1 sprout {isSyncing ? '(syncing...)' : ''}
+        1 minute studied = 1 point {isSyncing ? '(syncing...)' : ''}
       </p>
     </section>
   )

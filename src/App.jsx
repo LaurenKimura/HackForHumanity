@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import AuthForm from './components/AuthForm'
-import LandingPage from './components/LandingPage'
+import GardenView from './components/GardenView'
+import PointsSummary from './components/PointsSummary'
+import StorePanel from './components/StorePanel'
 import StudyTimer from './components/StudyTimer'
 import TaskSidebar from './components/TaskSidebar'
 import {
@@ -25,7 +27,6 @@ import {
 import { useStudyTimer } from './hooks/useStudyTimer'
 
 const EMPTY_PROFILE = {
-  name: '',
   email: '',
   totalPoints: 0,
   totalStudyTime: 0,
@@ -60,8 +61,6 @@ function App() {
   const [creditedMinutes, setCreditedMinutes] = useState(0)
   const [isSyncingStudyProgress, setIsSyncingStudyProgress] = useState(false)
 
-  const [currentPage, setCurrentPage] = useState('home')
-
   const { elapsedSeconds, isRunning, start, pause, reset } = useStudyTimer()
 
   useEffect(() => {
@@ -82,7 +81,6 @@ function App() {
       setIsGardenLoading(false)
       setAppError('')
       setCreditedMinutes(0)
-      setCurrentPage('home')
       reset()
       return undefined
     }
@@ -104,7 +102,6 @@ function App() {
         if (isCancelled) return
 
         setProfile({
-          name: nextProfile.name || currentUser.displayName || '',
           email: nextProfile.email || currentUser.email || '',
           totalPoints: nextProfile.totalPoints ?? 0,
           totalStudyTime: nextProfile.totalStudyTime ?? 0,
@@ -311,10 +308,7 @@ function App() {
     )
   }
 
-  // TODO: Remove this preview bypass once Firebase is configured
-  const previewMode = !currentUser
-
-  if (isAuthLoading && !previewMode) {
+  if (isAuthLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-sm font-medium text-slate-600">Loading...</p>
@@ -322,7 +316,7 @@ function App() {
     )
   }
 
-  if (!currentUser && !previewMode) {
+  if (!currentUser) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-10">
         <AuthForm
@@ -336,56 +330,22 @@ function App() {
     )
   }
 
-  const previewProfile = previewMode
-    ? { name: 'Josue', email: 'josue@example.com', totalPoints: 50, totalStudyTime: 3600 }
-    : profile
-  const previewPoints = previewMode ? 50 : points
-
-  // Authenticated: Landing Page or Study View
-  if (currentPage === 'home') {
-    return (
-      <>
-        {appError ? (
-          <p className="fixed left-4 right-4 top-4 z-50 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-center text-sm text-rose-700">
-            {appError}
-          </p>
-        ) : null}
-        <LandingPage
-          profile={previewProfile}
-          gardenItems={gardenItems}
-          isGardenLoading={false}
-          points={previewPoints}
-          purchasingFlowerId={purchasingFlowerId}
-          onPurchase={handlePurchaseFlower}
-          onNavigateToStudy={() => setCurrentPage('study')}
-          onLogOut={handleLogOut}
-        />
-      </>
-    )
-  }
-
-  // Study page
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8" style={{ backgroundColor: '#FAF7F4' }}>
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setCurrentPage('home')}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition hover:bg-white/80"
-            style={{ color: '#5C3D2E', fontFamily: '"Quicksand", sans-serif' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            back to garden
-          </button>
-
-          <div className="flex items-center gap-2 rounded-full px-3 py-1" style={{ backgroundColor: '#F0F7E6' }}>
-            <img src="/flower_one.png" alt="sprout" className="h-4 w-4 object-contain" />
-            <span className="text-sm font-bold" style={{ color: '#5C3D2E' }}>{previewPoints} sprouts</span>
+    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-4 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wide text-sky-700">Mind Garden</p>
+            <h1 className="text-2xl font-bold text-slate-900">Gamified Study Dashboard</h1>
           </div>
-        </div>
+          <button
+            className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            onClick={handleLogOut}
+            type="button"
+          >
+            Log Out
+          </button>
+        </header>
 
         {appError ? (
           <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
@@ -393,7 +353,16 @@ function App() {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px,1fr]">
+        <div className="mb-4">
+          <PointsSummary
+            name={profile.name}
+            email={profile.email}
+            points={points}
+            totalStudyTimeSeconds={totalStudyTime}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px,1fr,300px]">
           <TaskSidebar
             tasks={tasks}
             isLoading={isTasksLoading}
@@ -403,13 +372,22 @@ function App() {
             onRenameTask={handleRenameTask}
           />
 
-          <StudyTimer
-            elapsedSeconds={elapsedSeconds}
-            isRunning={isRunning}
-            isSyncing={isSyncingStudyProgress}
-            onStart={start}
-            onPause={pause}
-            onReset={handleResetTimer}
+          <div className="space-y-4">
+            <StudyTimer
+              elapsedSeconds={elapsedSeconds}
+              isRunning={isRunning}
+              isSyncing={isSyncingStudyProgress}
+              onStart={start}
+              onPause={pause}
+              onReset={handleResetTimer}
+            />
+            <GardenView gardenItems={gardenItems} isLoading={isGardenLoading} />
+          </div>
+
+          <StorePanel
+            points={points}
+            onPurchase={handlePurchaseFlower}
+            purchasingFlowerId={purchasingFlowerId}
           />
         </div>
       </div>
