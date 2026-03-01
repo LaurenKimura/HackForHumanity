@@ -10,7 +10,7 @@ function PointsSummary({ name, email, points, totalStudyTimeSeconds }) {
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-amber-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Points</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Sprouts</p>
           <p className="mt-1 text-2xl font-bold text-amber-900">{points}</p>
         </div>
         <div className="rounded-2xl bg-emerald-50 p-3">

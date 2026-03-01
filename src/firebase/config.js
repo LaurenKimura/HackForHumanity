@@ -15,13 +15,16 @@ export const missingFirebaseConfig = Object.entries(firebaseConfig)
   .filter(([, value]) => !value)
   .map(([key]) => key)
 
-if (missingFirebaseConfig.length > 0) {
+let auth, db
+
+if (missingFirebaseConfig.length === 0) {
+  const app = initializeApp(firebaseConfig)
+  auth = getAuth(app)
+  db = getFirestore(app)
+} else {
   console.warn(
     `Missing Firebase environment variables: ${missingFirebaseConfig.join(', ')}`,
   )
 }
 
-const app = initializeApp(firebaseConfig)
-
-export const auth = getAuth(app)
-export const db = getFirestore(app)
+export { auth, db }
