@@ -5,7 +5,13 @@ import PointsSummary from './components/PointsSummary'
 import StorePanel from './components/StorePanel'
 import StudyTimer from './components/StudyTimer'
 import TaskSidebar from './components/TaskSidebar'
-import { logOutUser, signInWithEmail, signUpWithEmail, subscribeToAuthChanges } from './firebase/auth'
+import {
+  logOutUser,
+  signInWithEmail,
+  signInWithGoogle,
+  signUpWithEmail,
+  subscribeToAuthChanges,
+} from './firebase/auth'
 import { missingFirebaseConfig } from './firebase/config'
 import {
   addStudyProgress,
@@ -185,11 +191,23 @@ function App() {
     }
   }
 
-  const handleSignUp = async (email, password) => {
+  const handleSignUp = async (email, password, displayName) => {
     setAuthError('')
     setIsAuthSubmitting(true)
     try {
-      await signUpWithEmail(email, password)
+      await signUpWithEmail(email, password, displayName)
+    } catch (error) {
+      setAuthError(getFriendlyErrorMessage(error))
+    } finally {
+      setIsAuthSubmitting(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setAuthError('')
+    setIsAuthSubmitting(true)
+    try {
+      await signInWithGoogle()
     } catch (error) {
       setAuthError(getFriendlyErrorMessage(error))
     } finally {
@@ -304,6 +322,7 @@ function App() {
         <AuthForm
           onSignIn={handleSignIn}
           onSignUp={handleSignUp}
+          onGoogleSignIn={handleGoogleSignIn}
           isSubmitting={isAuthSubmitting}
           errorMessage={authError}
         />
@@ -335,7 +354,12 @@ function App() {
         ) : null}
 
         <div className="mb-4">
-          <PointsSummary email={profile.email} points={points} totalStudyTimeSeconds={totalStudyTime} />
+          <PointsSummary
+            name={profile.name}
+            email={profile.email}
+            points={points}
+            totalStudyTimeSeconds={totalStudyTime}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px,1fr,300px]">

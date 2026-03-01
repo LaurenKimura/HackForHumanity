@@ -21,6 +21,7 @@ const tasksCollectionRef = (uid) => collection(userDocRef(uid), 'tasks')
 const gardenCollectionRef = (uid) => collection(userDocRef(uid), 'garden')
 
 const DEFAULT_PROFILE = {
+  name: '',
   email: '',
   totalPoints: 0,
   totalStudyTime: 0,
@@ -34,6 +35,7 @@ export const ensureUserProfile = async (user) => {
 
   if (!existingSnapshot.exists()) {
     await setDoc(targetRef, {
+      name: user.displayName ?? '',
       email: user.email ?? '',
       totalPoints: 0,
       totalStudyTime: 0,
@@ -44,6 +46,7 @@ export const ensureUserProfile = async (user) => {
   const existingData = existingSnapshot.data()
   const profileUpdates = {}
 
+  if (!existingData.name && user.displayName) profileUpdates.name = user.displayName
   if (!existingData.email && user.email) profileUpdates.email = user.email
   if (typeof existingData.totalPoints !== 'number') profileUpdates.totalPoints = 0
   if (typeof existingData.totalStudyTime !== 'number') profileUpdates.totalStudyTime = 0
@@ -64,6 +67,7 @@ export const listenToUserProfile = (uid, onData, onError) =>
 
       const data = snapshot.data()
       onData({
+        name: data.name ?? '',
         email: data.email ?? '',
         totalPoints: data.totalPoints ?? 0,
         totalStudyTime: data.totalStudyTime ?? 0,
