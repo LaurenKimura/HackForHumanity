@@ -1,25 +1,20 @@
-import { useEffect, useRef } from 'react' // Import these from React
+import { useEffect, useRef } from 'react'
 import { formatSecondsToClock } from '../utils/time'
 
-function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, onReset }) {
-  
-  // 1. Setup the audio reference (Ensure your file is in /public/classical_piano.mp3)
+function StudyTimer({ remainingSeconds, isRunning, isSyncing, onStart, onPause, onReset }) {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    // Initialize the audio object only once
     audioRef.current = new Audio('/classical_piano.mp3');
     audioRef.current.loop = true;
-    audioRef.current.volume = 0.4; // Set to 40% volume
+    audioRef.current.volume = 0.4;
 
-    // Cleanup: Stop music if the component unmounts
     return () => {
       audioRef.current.pause();
       audioRef.current = null;
     };
   }, []);
 
-  // 2. Control music based on the 'isRunning' prop
   useEffect(() => {
     if (audioRef.current) {
       if (isRunning) {
@@ -33,16 +28,30 @@ function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, on
   }, [isRunning]);
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-center text-lg font-semibold text-slate-900">Study Timer</h2>
-      <p className="mt-4 text-center text-5xl font-bold tracking-wider text-slate-900">
-        {formatSecondsToClock(elapsedSeconds)}
+    <section
+      className="rounded-2xl bg-white p-6"
+      style={{ border: '1px solid #E8E6E1' }}
+    >
+      <h2
+        className="text-center text-lg font-semibold"
+        style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+      >
+        Study Timer
+      </h2>
+      <p
+        className="mt-4 text-center text-7xl font-bold tracking-wider"
+        style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+      >
+        {formatSecondsToClock(remainingSeconds)}
       </p>
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         {isRunning ? (
           <button
-            className="rounded-xl bg-amber-500 px-4 py-2 font-medium text-white transition hover:bg-amber-600"
+            className="rounded-xl px-5 py-2.5 font-medium text-white transition"
+            style={{ backgroundColor: '#D4A017' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B8890F'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#D4A017'}
             onClick={onPause}
             type="button"
             disabled={isSyncing}
@@ -51,7 +60,10 @@ function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, on
           </button>
         ) : (
           <button
-            className="rounded-xl bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
+            className="rounded-xl px-5 py-2.5 font-medium text-white transition"
+            style={{ backgroundColor: '#1B6B4A' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#155A3E'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1B6B4A'}
             onClick={onStart}
             type="button"
             disabled={isSyncing}
@@ -60,11 +72,9 @@ function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, on
           </button>
         )}
         <button
-          className="rounded-xl bg-slate-700 px-4 py-2 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-          onClick={() => {
-            onReset();
-            // Optional: stop music on reset
-          }}
+          className="rounded-xl px-5 py-2.5 font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ color: '#7A7A72', border: '1px solid #E8E6E1' }}
+          onClick={onReset}
           type="button"
           disabled={isSyncing}
         >
@@ -72,7 +82,7 @@ function StudyTimer({ elapsedSeconds, isRunning, isSyncing, onStart, onPause, on
         </button>
       </div>
 
-      <p className="mt-4 text-center text-xs text-slate-500">
+      <p className="mt-4 text-center text-xs" style={{ color: '#AAAA9F' }}>
         1 minute studied = 1 point {isSyncing ? '(syncing...)' : ''}
       </p>
     </section>

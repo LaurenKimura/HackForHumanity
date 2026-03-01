@@ -8,32 +8,54 @@ function GardenView({ gardenItems, isLoading }) {
   )
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">Your Garden</h2>
-      <p className="mt-1 text-sm text-slate-500">Flowers you buy with points appear here.</p>
+    <section
+      className="rounded-2xl bg-white p-5"
+      style={{ border: '1px solid #E8E6E1' }}
+    >
+      <div className="flex items-center justify-between">
+        <h2
+          className="text-lg font-semibold"
+          style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+        >
+          Your Garden
+        </h2>
+        <button
+          className="text-sm font-medium transition"
+          style={{ color: '#1B6B4A' }}
+          type="button"
+        >
+          View all
+        </button>
+      </div>
 
-      <div className="mt-4 rounded-2xl border border-emerald-200 bg-gradient-to-b from-sky-100 to-emerald-100 p-4">
+      <div className="mt-4 rounded-xl p-4" style={{ backgroundColor: '#E8F5E9' }}>
         {isLoading ? (
-          <div className="flex h-48 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-300 text-sm text-emerald-800">
+          <div
+            className="flex h-24 items-center justify-center rounded-xl border-2 border-dashed text-sm"
+            style={{ borderColor: '#1B6B4A', color: '#1B6B4A', opacity: 0.6 }}
+          >
             Loading garden...
           </div>
         ) : gardenItems.length === 0 ? (
-          <div className="flex h-48 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-300 text-center text-sm text-emerald-800">
+          <div
+            className="flex h-24 items-center justify-center rounded-xl border-2 border-dashed text-center text-sm"
+            style={{ borderColor: '#1B6B4A', color: '#1B6B4A', opacity: 0.6 }}
+          >
             Start your first focus session and buy a flower!
           </div>
         ) : (
-          <div className="grid min-h-48 grid-cols-4 gap-3 sm:grid-cols-6">
+          <div className="flex min-h-[6rem] gap-3 overflow-x-auto pb-1">
             {gardenItems.map((item) => {
               const flower = flowerLookup.get(item.flowerId)
 
               return (
                 <div
-                  className="flex flex-col items-center rounded-xl border border-white/60 bg-white/60 p-2 shadow-sm"
+                  className="flex flex-shrink-0 flex-col items-center rounded-lg bg-white/80 px-3 py-2"
                   key={item.id}
                   title={flower ? `${flower.name} (${flower.cost} points)` : 'Unknown flower'}
                 >
-                  <span className="text-3xl">{flower?.emoji ?? '🌱'}</span>
-                  <span className="mt-1 text-center text-xs font-medium text-slate-700">
+                  <span className="text-2xl">{flower?.emoji ?? '🌱'}</span>
+                  <span className="mt-1 text-center text-xs font-medium" style={{ color: '#1A1A1A' }}>
                     {flower?.name ?? item.flowerId}
                   </span>
                 </div>

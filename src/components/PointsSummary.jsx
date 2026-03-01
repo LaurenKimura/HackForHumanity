@@ -1,25 +1,32 @@
 import { formatStudyDuration } from '../utils/time'
 
-function PointsSummary({ name, email, points, totalStudyTimeSeconds }) {
+function PointsSummary({ points, totalStudyTimeSeconds, tasksCompleted, gardenCount }) {
+  const stats = [
+    { label: 'Points', value: points, color: '#D4A017' },
+    { label: 'Study Time', value: formatStudyDuration(totalStudyTimeSeconds), color: '#1B6B4A' },
+    { label: 'Tasks Done', value: tasksCompleted, color: '#1A1A1A' },
+    { label: 'Garden', value: gardenCount, color: '#1A1A1A' },
+  ]
+
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-semibold text-slate-800">{name || 'Guest'}</p>
-        <span className="text-xs text-slate-400">•</span>
-        <p className="text-xs text-slate-500">{email}</p>
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-amber-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Points</p>
-          <p className="mt-1 text-2xl font-bold text-amber-900">{points}</p>
-        </div>
-        <div className="rounded-2xl bg-emerald-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Study Time</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-900">
-            {formatStudyDuration(totalStudyTimeSeconds)}
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="rounded-2xl bg-white p-4"
+          style={{ border: '1px solid #E8E6E1' }}
+        >
+          <p
+            className="text-3xl font-bold"
+            style={{ fontFamily: "'Space Grotesk', sans-serif", color: stat.color }}
+          >
+            {stat.value}
+          </p>
+          <p className="mt-1 text-sm font-medium" style={{ color: '#7A7A72' }}>
+            {stat.label}
           </p>
         </div>
-      </div>
+      ))}
     </section>
   )
 }

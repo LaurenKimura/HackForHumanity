@@ -26,8 +26,11 @@ import {
 } from './firebase/firestore'
 import { useStudyTimer } from './hooks/useStudyTimer'
 
+const TIMER_DURATION = 25 * 60
+
 const EMPTY_PROFILE = {
   email: '',
+  displayName: '',
   totalPoints: 0,
   totalStudyTime: 0,
 }
@@ -48,6 +51,7 @@ function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false)
   const [authError, setAuthError] = useState('')
+  const [isGuestMode, setIsGuestMode] = useState(false)
 
   const [profile, setProfile] = useState(EMPTY_PROFILE)
   const [tasks, setTasks] = useState([])
@@ -61,7 +65,7 @@ function App() {
   const [creditedMinutes, setCreditedMinutes] = useState(0)
   const [isSyncingStudyProgress, setIsSyncingStudyProgress] = useState(false)
 
-  const { elapsedSeconds, isRunning, start, pause, reset } = useStudyTimer()
+  const { remainingSeconds, isRunning, start, pause, reset } = useStudyTimer(TIMER_DURATION)
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -103,6 +107,7 @@ function App() {
 
         setProfile({
           email: nextProfile.email || currentUser.email || '',
+          displayName: nextProfile.displayName || currentUser.displayName || '',
           totalPoints: nextProfile.totalPoints ?? 0,
           totalStudyTime: nextProfile.totalStudyTime ?? 0,
         })
@@ -151,6 +156,7 @@ function App() {
   useEffect(() => {
     if (!currentUser || isSyncingStudyProgress) return
 
+    const elapsedSeconds = TIMER_DURATION - remainingSeconds
     const reachedMinutes = Math.floor(elapsedSeconds / 60)
     if (reachedMinutes <= creditedMinutes) return
 
@@ -177,7 +183,7 @@ function App() {
     return () => {
       isCancelled = true
     }
-  }, [currentUser, elapsedSeconds, creditedMinutes, isSyncingStudyProgress])
+  }, [currentUser, remainingSeconds, creditedMinutes, isSyncingStudyProgress])
 
   const handleSignIn = async (email, password) => {
     setAuthError('')
@@ -288,11 +294,24 @@ function App() {
     () => profile.totalStudyTime ?? 0,
     [profile.totalStudyTime],
   )
+  const tasksCompleted = useMemo(
+    () => tasks.filter((t) => t.completed).length,
+    [tasks],
+  )
+  const gardenCount = gardenItems.length
+
+  const displayName = profile.displayName || currentUser?.displayName || 'Guest'
+  const userInitials = displayName
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'G'
 
   if (missingFirebaseConfig.length > 0) {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl items-center px-4 py-10">
-        <div className="w-full rounded-3xl border border-amber-300 bg-amber-50 p-6 text-amber-900 shadow-sm">
+        <div className="w-full rounded-2xl border border-amber-300 bg-amber-50 p-6 text-amber-900 shadow-sm">
           <h1 className="text-xl font-semibold">Firebase config missing</h1>
           <p className="mt-2 text-sm">
             Create a <code>.env</code> file using <code>.env.example</code> and add your Firebase
@@ -310,22 +329,32 @@ function App() {
 
   if (isAuthLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-sm font-medium text-slate-600">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#F8F7F4' }}>
+        <p className="text-sm font-medium" style={{ color: '#7A7A72' }}>Loading...</p>
       </main>
     )
   }
 
-  if (!currentUser) {
+  if (!currentUser && !isGuestMode) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-10">
-        <AuthForm
-          onSignIn={handleSignIn}
-          onSignUp={handleSignUp}
-          onGoogleSignIn={handleGoogleSignIn}
-          isSubmitting={isAuthSubmitting}
-          errorMessage={authError}
-        />
+        <div className="flex flex-col items-center gap-4">
+          <AuthForm
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            onGoogleSignIn={handleGoogleSignIn}
+            isSubmitting={isAuthSubmitting}
+            errorMessage={authError}
+          />
+          <button
+            className="text-sm font-medium underline transition"
+            style={{ color: '#7A7A72' }}
+            onClick={() => setIsGuestMode(true)}
+            type="button"
+          >
+            Skip — view as guest
+          </button>
+        </div>
       </main>
     )
   }
@@ -333,18 +362,40 @@ function App() {
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-4 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <header
+          className="mb-5 flex items-center justify-between pb-4"
+          style={{ borderBottom: '1px solid #E8E6E1' }}
+        >
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-sky-700">BloomFocus</p>
-            <h1 className="text-2xl font-bold text-slate-900">Gamified Study Dashboard</h1>
+            <h1
+              className="text-2xl font-bold tracking-tight"
+              style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+            >
+              BloomFocus
+            </h1>
+            <p className="text-sm" style={{ color: '#7A7A72' }}>
+              Gamified Study Dashboard
+            </p>
           </div>
-          <button
-            className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-            onClick={handleLogOut}
-            type="button"
-          >
-            Log Out
-          </button>
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white"
+              style={{ backgroundColor: '#1B6B4A' }}
+            >
+              {userInitials}
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{displayName}</p>
+            </div>
+            <button
+              className="text-sm font-medium transition"
+              style={{ color: '#7A7A72' }}
+              onClick={isGuestMode ? () => setIsGuestMode(false) : handleLogOut}
+              type="button"
+            >
+              {isGuestMode ? 'Log in' : 'Log out'}
+            </button>
+          </div>
         </header>
 
         {appError ? (
@@ -353,16 +404,16 @@ function App() {
           </p>
         ) : null}
 
-        <div className="mb-4">
+        <div className="mb-5">
           <PointsSummary
-            name={profile.name}
-            email={profile.email}
             points={points}
             totalStudyTimeSeconds={totalStudyTime}
+            tasksCompleted={tasksCompleted}
+            gardenCount={gardenCount}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px,1fr,300px]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_1fr_280px]">
           <TaskSidebar
             tasks={tasks}
             isLoading={isTasksLoading}
@@ -372,9 +423,9 @@ function App() {
             onRenameTask={handleRenameTask}
           />
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <StudyTimer
-              elapsedSeconds={elapsedSeconds}
+              remainingSeconds={remainingSeconds}
               isRunning={isRunning}
               isSyncing={isSyncingStudyProgress}
               onStart={start}

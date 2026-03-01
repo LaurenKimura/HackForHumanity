@@ -38,39 +38,53 @@ function TaskSidebar({ tasks, isLoading, onAddTask, onToggleTask, onDeleteTask, 
   }
 
   return (
-    <aside className="h-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">To-Do List</h2>
+    <aside
+      className="h-full rounded-2xl bg-white p-4"
+      style={{ border: '1px solid #E8E6E1' }}
+    >
+      <h2
+        className="text-lg font-semibold"
+        style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+      >
+        To-Do List
+      </h2>
 
       <form className="mt-4 flex gap-2" onSubmit={handleCreateTask}>
         <input
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
+          style={{
+            borderColor: '#E8E6E1',
+            color: '#1A1A1A',
+          }}
           placeholder="Add a task..."
           value={newTitle}
           onChange={(event) => setNewTitle(event.target.value)}
         />
         <button
-          className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-700"
+          className="rounded-xl px-3 py-2 text-sm font-medium text-white transition"
+          style={{ backgroundColor: '#1B6B4A' }}
           type="submit"
         >
           Add
         </button>
       </form>
 
-      {isLoading ? <p className="mt-4 text-sm text-slate-500">Loading tasks...</p> : null}
+      {isLoading ? <p className="mt-4 text-sm" style={{ color: '#7A7A72' }}>Loading tasks...</p> : null}
       {!isLoading && sortedTasks.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">No tasks yet. Add your first one.</p>
+        <p className="mt-4 text-sm" style={{ color: '#7A7A72' }}>No tasks yet. Add your first one.</p>
       ) : null}
 
       <ul className="mt-4 space-y-2">
         {sortedTasks.map((task) => (
           <li
-            className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm"
+            className="rounded-xl p-3 text-sm"
+            style={{ backgroundColor: '#F0EFEB' }}
             key={task.id}
           >
             <div className="flex items-start gap-2">
               <input
                 checked={Boolean(task.completed)}
-                className="mt-1 h-4 w-4"
+                className="mt-1 h-4 w-4 accent-[#1B6B4A]"
                 onChange={() => onToggleTask(task.id, task.completed)}
                 type="checkbox"
               />
@@ -79,20 +93,23 @@ function TaskSidebar({ tasks, isLoading, onAddTask, onToggleTask, onDeleteTask, 
                 {editingTaskId === task.id ? (
                   <div className="space-y-2">
                     <input
-                      className="w-full rounded-lg border border-slate-300 px-2 py-1 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                      className="w-full rounded-lg border px-2 py-1 text-sm outline-none"
+                      style={{ borderColor: '#E8E6E1' }}
                       value={editingTitle}
                       onChange={(event) => setEditingTitle(event.target.value)}
                     />
                     <div className="flex gap-2">
                       <button
-                        className="rounded-lg bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-white"
+                        style={{ backgroundColor: '#1B6B4A' }}
                         onClick={saveTaskTitle}
                         type="button"
                       >
                         Save
                       </button>
                       <button
-                        className="rounded-lg bg-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-400"
+                        className="rounded-lg px-2 py-1 text-xs font-medium"
+                        style={{ backgroundColor: '#E8E6E1', color: '#1A1A1A' }}
                         onClick={cancelEditing}
                         type="button"
                       >
@@ -102,9 +119,8 @@ function TaskSidebar({ tasks, isLoading, onAddTask, onToggleTask, onDeleteTask, 
                   </div>
                 ) : (
                   <button
-                    className={`w-full text-left ${
-                      task.completed ? 'text-slate-400 line-through' : 'text-slate-800'
-                    }`}
+                    className={`w-full text-left ${task.completed ? 'line-through' : ''}`}
+                    style={{ color: task.completed ? '#AAAA9F' : '#1A1A1A' }}
                     onClick={() => beginEditing(task)}
                     type="button"
                   >

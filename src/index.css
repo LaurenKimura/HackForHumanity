@@ -5,8 +5,8 @@ body {
   min-height: 100vh;
   min-width: 320px;
   font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: url('/background.png') no-repeat center center / cover;
-  color: #0f172a;
+  background-color: #F8F7F4;
+  color: #1A1A1A;
 }
 
 #root {
