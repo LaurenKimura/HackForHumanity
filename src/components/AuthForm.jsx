@@ -33,7 +33,7 @@ function AuthForm({ onSignIn, onSignUp, onGoogleSignIn, isSubmitting, errorMessa
 
   return (
     <div className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-center text-2xl font-semibold text-slate-900">BloomFocus</h1>
+      <h1 className="text-center text-2xl font-semibold text-slate-900">Mind Garden</h1>
       <p className="mt-2 text-center text-sm text-slate-600">
         Study, earn points, and grow your garden.
       </p>

@@ -335,7 +335,7 @@ function App() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-4 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-sky-700">BloomFocus</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-sky-700">Mind Garden</p>
             <h1 className="text-2xl font-bold text-slate-900">Gamified Study Dashboard</h1>
           </div>
           <button
