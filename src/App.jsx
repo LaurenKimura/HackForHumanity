@@ -58,10 +58,29 @@ function App() {
   const [purchasingFlowerId, setPurchasingFlowerId] = useState('')
   const [appError, setAppError] = useState('')
 
-  const [creditedMinutes, setCreditedMinutes] = useState(0)
+  const [targetSeconds, setTargetSeconds] = useState(25 * 60) // Default 25 mins
   const [isSyncingStudyProgress, setIsSyncingStudyProgress] = useState(false)
 
-  const { elapsedSeconds, isRunning, start, pause, reset } = useStudyTimer()
+  const handleTimerFinished = useCallback(async () => {
+    if (!currentUser) return
+
+    const minutes = Math.floor(targetSeconds / 60)
+    if (minutes <= 0) return
+
+    setIsSyncingStudyProgress(true)
+    try {
+      await addStudyProgress(currentUser.uid, minutes)
+    } catch (error) {
+      setAppError(getFriendlyErrorMessage(error))
+    } finally {
+      setIsSyncingStudyProgress(false)
+    }
+  }, [currentUser, targetSeconds])
+
+  const { remainingSeconds, isRunning, start, pause, reset } = useStudyTimer(
+    targetSeconds,
+    handleTimerFinished,
+  )
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -80,7 +99,6 @@ function App() {
       setIsTasksLoading(false)
       setIsGardenLoading(false)
       setAppError('')
-      setCreditedMinutes(0)
       reset()
       return undefined
     }
@@ -89,7 +107,6 @@ function App() {
 
     setIsTasksLoading(true)
     setIsGardenLoading(true)
-    setCreditedMinutes(0)
     setAppError('')
 
     ensureUserProfile(currentUser).catch((error) => {
@@ -148,37 +165,6 @@ function App() {
     }
   }, [currentUser, reset])
 
-  useEffect(() => {
-    if (!currentUser || isSyncingStudyProgress) return
-
-    const reachedMinutes = Math.floor(elapsedSeconds / 60)
-    if (reachedMinutes <= creditedMinutes) return
-
-    let isCancelled = false
-    const unsyncedMinutes = reachedMinutes - creditedMinutes
-
-    const syncStudyProgress = async () => {
-      setIsSyncingStudyProgress(true)
-
-      try {
-        await addStudyProgress(currentUser.uid, unsyncedMinutes)
-        if (!isCancelled) {
-          setCreditedMinutes((previousMinutes) => previousMinutes + unsyncedMinutes)
-        }
-      } catch (error) {
-        if (!isCancelled) setAppError(getFriendlyErrorMessage(error))
-      } finally {
-        if (!isCancelled) setIsSyncingStudyProgress(false)
-      }
-    }
-
-    syncStudyProgress()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [currentUser, elapsedSeconds, creditedMinutes, isSyncingStudyProgress])
-
   const handleSignIn = async (email, password) => {
     setAuthError('')
     setIsAuthSubmitting(true)
@@ -226,7 +212,6 @@ function App() {
 
   const handleResetTimer = () => {
     reset()
-    setCreditedMinutes(0)
   }
 
   const handleAddTask = async (title) => {
@@ -374,12 +359,14 @@ function App() {
 
           <div className="space-y-4">
             <StudyTimer
-              elapsedSeconds={elapsedSeconds}
+              remainingSeconds={remainingSeconds}
+              targetSeconds={targetSeconds}
               isRunning={isRunning}
               isSyncing={isSyncingStudyProgress}
               onStart={start}
               onPause={pause}
               onReset={handleResetTimer}
+              onSetTargetSeconds={setTargetSeconds}
             />
             <GardenView gardenItems={gardenItems} isLoading={isGardenLoading} />
           </div>
