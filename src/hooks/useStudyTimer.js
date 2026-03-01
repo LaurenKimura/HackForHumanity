@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 
 export const useStudyTimer = (initialSeconds, onFinished) => {
-  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds)
+  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds || 0)
   const [isRunning, setIsRunning] = useState(false)
   const onFinishedRef = useRef(onFinished)
 

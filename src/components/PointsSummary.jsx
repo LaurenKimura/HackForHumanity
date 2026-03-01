@@ -2,9 +2,9 @@ import { formatStudyDuration } from '../utils/time'
 
 function PointsSummary({ points, totalStudyTimeSeconds, tasksCompleted }) {
   const stats = [
-    { label: 'sprouts', value: points },
-    { label: 'study time', value: formatStudyDuration(totalStudyTimeSeconds) },
-    { label: 'tasks done', value: tasksCompleted },
+    { label: 'sprouts', value: points || 0},
+    { label: 'study time', value: formatStudyDuration(totalStudyTimeSeconds) || 0},
+    { label: 'tasks done', value: tasksCompleted || 0},
   ]
 
   return (

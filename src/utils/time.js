@@ -14,7 +14,8 @@ export const formatSecondsToClock = (seconds) => {
 }
 
 export const formatStudyDuration = (totalSeconds) => {
-  const safeSeconds = Math.max(0, totalSeconds)
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0)
+  
   const hours = Math.floor(safeSeconds / 3600)
   const minutes = Math.floor((safeSeconds % 3600) / 60)
 
