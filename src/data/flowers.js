@@ -4,6 +4,7 @@ export const FLOWERS = [
     name: 'Pink Flower',
     emoji: '🌼',
     cost: 5,
+    image: '/flower_one.png',
     description: 'A cheerful starter flower.',
   },
   {
@@ -11,6 +12,7 @@ export const FLOWERS = [
     name: 'Yellow Flower',
     emoji: '🌷',
     cost: 5,
+    image: '/flower_two.png',
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -18,6 +20,7 @@ export const FLOWERS = [
     name: 'Purple Flower',
     emoji: '🌹',
     cost: 5,
+    image: '/flower_three.png',
     description: 'A classic reward for longer study streaks.',
   },
   {
@@ -25,6 +28,7 @@ export const FLOWERS = [
     name: 'White Flower Bush',
     emoji: '🌻',
     cost: 10,
+    image: '/bush_one.png',
     description: 'Tall and bold, for serious progress.',
   },
   {
@@ -32,6 +36,7 @@ export const FLOWERS = [
     name: 'Pink Flower Bush',
     emoji: '🌸',
     cost: 10,
+    image: '/bush_two.png',
     description: 'Premium flower for top productivity days.',
   },
   {
@@ -39,6 +44,7 @@ export const FLOWERS = [
     name: 'Orange Butterfly',
     emoji: '🌷',
     cost: 15,
+    image: '/orange_butterfly.png',
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -46,6 +52,7 @@ export const FLOWERS = [
     name: 'Blue Butterfly',
     emoji: '🌷',
     cost: 15,
+    image: '/blue_butterfly.png',
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -53,6 +60,8 @@ export const FLOWERS = [
     name: 'Frog',
     emoji: '🌷',
     cost: 20,
+    image: '/derpy_frog.png',
+    scale: 0.5,
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -60,6 +69,8 @@ export const FLOWERS = [
     name: 'Bunny',
     emoji: '🌷',
     cost: 25,
+    image: '/bunny.png',
+    scale: 0.5,
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -67,6 +78,8 @@ export const FLOWERS = [
     name: 'Apple Tree',
     emoji: '🌷',
     cost: 30,
+    image: '/apple_tree.png',
+    scale: 3,
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -74,6 +87,8 @@ export const FLOWERS = [
     name: 'Picnic',
     emoji: '🌷',
     cost: 60,
+    image: '/picnic.png',
+    scale: 1.75,
     description: 'Bright colors for steady focus sessions.',
   },
   {
@@ -81,6 +96,8 @@ export const FLOWERS = [
     name: 'Pond',
     emoji: '🌷',
     cost: 60,
+    image: '/pond.png',
+    scale: 2,
     description: 'Bright colors for steady focus sessions.',
   },
 ]

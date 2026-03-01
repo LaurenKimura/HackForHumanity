@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthForm from './components/AuthForm'
-import GardenView from './components/GardenView'
-import PointsSummary from './components/PointsSummary'
-import StorePanel from './components/StorePanel'
-import StudyTimer from './components/StudyTimer'
-import TaskSidebar from './components/TaskSidebar'
+import LandingPage from './components/LandingPage'
+import DashboardPage from './components/DashboardPage'
+import GardenStorePage from './components/GardenStorePage'
+import NavBar from './components/NavBar'
+import YourGardenPage from './components/YourGardenPage'
 import {
   logOutUser,
   signInWithEmail,
@@ -14,6 +15,7 @@ import {
 } from './firebase/auth'
 import { missingFirebaseConfig } from './firebase/config'
 import {
+  addPoints,
   addStudyProgress,
   createTask,
   ensureUserProfile,
@@ -22,11 +24,48 @@ import {
   listenToUserProfile,
   purchaseFlower,
   removeTask,
+  updateGardenItemPosition,
   updateTask,
 } from './firebase/firestore'
 import { useStudyTimer } from './hooks/useStudyTimer'
 
-const TIMER_DURATION = 25 * 60
+const DEFAULT_TIMER_MINUTES = 25
+
+function UserButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      style={{
+        position: 'fixed',
+        top: '1.25rem',
+        right: '1.5rem',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: '0.5rem',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        color: '#5C4033',
+        zIndex: 50,
+        fontFamily: "'Cherry Bomb One', cursive",
+      }}
+    >
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="#5C4033"
+        stroke="none"
+      >
+        <circle cx="12" cy="7" r="4" />
+        <path d="M4 21c0-4.5 3.5-8 8-8s8 3.5 8 8H4z" />
+      </svg>
+      <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>user</span>
+    </button>
+  )
+}
 
 const EMPTY_PROFILE = {
   email: '',
@@ -52,6 +91,7 @@ function App() {
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false)
   const [authError, setAuthError] = useState('')
   const [isGuestMode, setIsGuestMode] = useState(false)
+  const [showLanding, setShowLanding] = useState(true)
 
   const [profile, setProfile] = useState(EMPTY_PROFILE)
   const [tasks, setTasks] = useState([])
@@ -63,14 +103,18 @@ function App() {
   const [appError, setAppError] = useState('')
 
   const [creditedMinutes, setCreditedMinutes] = useState(0)
+  const [carryoverMinutes, setCarryoverMinutes] = useState(0)
+  const [guestPoints, setGuestPoints] = useState(9999)
   const [isSyncingStudyProgress, setIsSyncingStudyProgress] = useState(false)
+  const [timerMinutes, setTimerMinutes] = useState(DEFAULT_TIMER_MINUTES)
 
-  const { remainingSeconds, isRunning, start, pause, reset } = useStudyTimer(TIMER_DURATION)
+  const { remainingSeconds, isRunning, start, pause, reset } = useStudyTimer(timerMinutes * 60)
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       setCurrentUser(user)
       setIsAuthLoading(false)
+      if (user) setShowLanding(false)
     })
 
     return unsubscribe
@@ -153,23 +197,41 @@ function App() {
     }
   }, [currentUser, reset])
 
+  // Timer point system: every 5 minutes studied = 2 points, leftover carries over
   useEffect(() => {
-    if (!currentUser || isSyncingStudyProgress) return
+    if (isSyncingStudyProgress) return
 
-    const elapsedSeconds = TIMER_DURATION - remainingSeconds
+    const timerDuration = timerMinutes * 60
+    const elapsedSeconds = timerDuration - remainingSeconds
     const reachedMinutes = Math.floor(elapsedSeconds / 60)
     if (reachedMinutes <= creditedMinutes) return
 
-    let isCancelled = false
     const unsyncedMinutes = reachedMinutes - creditedMinutes
+    const totalAvailable = unsyncedMinutes + carryoverMinutes
+    const fiveMinBlocks = Math.floor(totalAvailable / 5)
+    const pointsEarned = fiveMinBlocks * 2
+    const leftover = totalAvailable - fiveMinBlocks * 5
+
+    if (!currentUser) {
+      // Guest mode: update locally
+      if (pointsEarned > 0) {
+        setGuestPoints((prev) => prev + pointsEarned)
+      }
+      setCarryoverMinutes(leftover)
+      setCreditedMinutes(reachedMinutes)
+      return
+    }
+
+    let isCancelled = false
 
     const syncStudyProgress = async () => {
       setIsSyncingStudyProgress(true)
 
       try {
-        await addStudyProgress(currentUser.uid, unsyncedMinutes)
+        await addStudyProgress(currentUser.uid, unsyncedMinutes, pointsEarned)
         if (!isCancelled) {
-          setCreditedMinutes((previousMinutes) => previousMinutes + unsyncedMinutes)
+          setCreditedMinutes((prev) => prev + unsyncedMinutes)
+          setCarryoverMinutes(leftover)
         }
       } catch (error) {
         if (!isCancelled) setAppError(getFriendlyErrorMessage(error))
@@ -183,7 +245,7 @@ function App() {
     return () => {
       isCancelled = true
     }
-  }, [currentUser, remainingSeconds, creditedMinutes, isSyncingStudyProgress])
+  }, [currentUser, remainingSeconds, creditedMinutes, carryoverMinutes, isSyncingStudyProgress, timerMinutes])
 
   const handleSignIn = async (email, password) => {
     setAuthError('')
@@ -236,7 +298,14 @@ function App() {
   }
 
   const handleAddTask = async (title) => {
-    if (!currentUser) return
+    if (!currentUser) {
+      // Guest mode: local tasks
+      setTasks((prev) => [
+        ...prev,
+        { id: `local-${Date.now()}`, title, completed: false },
+      ])
+      return
+    }
     setAppError('')
     try {
       await createTask(currentUser.uid, title)
@@ -246,17 +315,37 @@ function App() {
   }
 
   const handleToggleTask = async (taskId, isCompleted) => {
-    if (!currentUser) return
+    const isNowCompleted = !isCompleted
+
+    if (!currentUser) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, completed: isNowCompleted } : t))
+      )
+      // Award 1 point for completing a task (not for uncompleting)
+      if (isNowCompleted) {
+        setGuestPoints((prev) => prev + 1)
+      }
+      return
+    }
     setAppError('')
     try {
-      await updateTask(currentUser.uid, taskId, { completed: !isCompleted })
+      await updateTask(currentUser.uid, taskId, { completed: isNowCompleted })
+      // Award 1 point for completing a task
+      if (isNowCompleted) {
+        await addPoints(currentUser.uid, 1)
+      }
     } catch (error) {
       setAppError(getFriendlyErrorMessage(error))
     }
   }
 
   const handleRenameTask = async (taskId, title) => {
-    if (!currentUser) return
+    if (!currentUser) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, title: title.trim() } : t))
+      )
+      return
+    }
     setAppError('')
     try {
       await updateTask(currentUser.uid, taskId, { title: title.trim() })
@@ -266,7 +355,10 @@ function App() {
   }
 
   const handleDeleteTask = async (taskId) => {
-    if (!currentUser) return
+    if (!currentUser) {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId))
+      return
+    }
     setAppError('')
     try {
       await removeTask(currentUser.uid, taskId)
@@ -289,7 +381,51 @@ function App() {
     }
   }
 
-  const points = useMemo(() => profile.totalPoints ?? 0, [profile.totalPoints])
+  // Place a flower at a specific position
+  const handlePlaceFlower = async (flower, x, y) => {
+    if (currentUser) {
+      setAppError('')
+      try {
+        await purchaseFlower(currentUser.uid, flower, x, y)
+      } catch (error) {
+        setAppError(getFriendlyErrorMessage(error))
+      }
+      return
+    }
+    // Guest mode
+    if (guestPoints < flower.cost) return
+    setGuestPoints((prev) => prev - flower.cost)
+    setGardenItems((prev) => [
+      ...prev,
+      {
+        id: `garden-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        flowerId: flower.id,
+        x,
+        y,
+      },
+    ])
+  }
+
+  // Move an existing garden item to a new position
+  const handleMoveGardenItem = async (itemId, x, y) => {
+    if (currentUser) {
+      try {
+        await updateGardenItemPosition(currentUser.uid, itemId, x, y)
+      } catch (error) {
+        setAppError(getFriendlyErrorMessage(error))
+      }
+      return
+    }
+    // Guest mode
+    setGardenItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, x, y } : item))
+    )
+  }
+
+  const points = useMemo(
+    () => currentUser ? (profile.totalPoints ?? 0) : guestPoints,
+    [currentUser, profile.totalPoints, guestPoints],
+  )
   const totalStudyTime = useMemo(
     () => profile.totalStudyTime ?? 0,
     [profile.totalStudyTime],
@@ -335,68 +471,73 @@ function App() {
     )
   }
 
+  if (!currentUser && !isGuestMode && showLanding) {
+    return (
+      <>
+        <UserButton onClick={() => setShowLanding(false)} />
+        <LandingPage onContinue={() => setShowLanding(false)} />
+      </>
+    )
+  }
+
   if (!currentUser && !isGuestMode) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-4 py-10">
-        <div className="flex flex-col items-center gap-4">
-          <AuthForm
-            onSignIn={handleSignIn}
-            onSignUp={handleSignUp}
-            onGoogleSignIn={handleGoogleSignIn}
-            isSubmitting={isAuthSubmitting}
-            errorMessage={authError}
-          />
-          <button
-            className="text-sm font-medium underline transition"
-            style={{ color: '#7A7A72' }}
-            onClick={() => setIsGuestMode(true)}
-            type="button"
-          >
-            Skip — view as guest
-          </button>
-        </div>
-      </main>
+      <>
+        <UserButton onClick={() => setShowLanding(true)} />
+        <main style={{
+          minHeight: '100vh',
+          backgroundImage: 'url(/background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <AuthForm
+              onSignIn={handleSignIn}
+              onSignUp={handleSignUp}
+              onGoogleSignIn={handleGoogleSignIn}
+              isSubmitting={isAuthSubmitting}
+              errorMessage={authError}
+            />
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontFamily: "'Cherry Bomb One', cursive",
+                fontSize: '14px',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+              onClick={() => setIsGuestMode(true)}
+              type="button"
+            >
+              guest mode
+            </button>
+          </div>
+        </main>
+      </>
     )
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+    <>
+    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8" style={{
+      background: 'linear-gradient(180deg, #A8DFF0 0%, #C2ECFA 15%, #D6F0E8 30%, #E4F4EC 45%, #d8ecac 65%, #C9E6A0 80%, #B8D890 100%)',
+      backgroundAttachment: 'fixed',
+    }}>
       <div className="mx-auto max-w-7xl">
-        <header
-          className="mb-5 flex items-center justify-between pb-4"
-          style={{ borderBottom: '1px solid #E8E6E1' }}
-        >
-          <div>
-            <h1
-              className="text-2xl font-bold tracking-tight"
-              style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
-            >
-              BloomFocus
-            </h1>
-            <p className="text-sm" style={{ color: '#7A7A72' }}>
-              Gamified Study Dashboard
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white"
-              style={{ backgroundColor: '#1B6B4A' }}
-            >
-              {userInitials}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{displayName}</p>
-            </div>
-            <button
-              className="text-sm font-medium transition"
-              style={{ color: '#7A7A72' }}
-              onClick={isGuestMode ? () => setIsGuestMode(false) : handleLogOut}
-              type="button"
-            >
-              {isGuestMode ? 'Log in' : 'Log out'}
-            </button>
-          </div>
-        </header>
+        <NavBar
+          displayName={displayName}
+          userInitials={userInitials}
+          isGuestMode={isGuestMode}
+          onLogOut={handleLogOut}
+          onLogIn={() => setIsGuestMode(false)}
+        />
 
         {appError ? (
           <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
@@ -404,45 +545,61 @@ function App() {
           </p>
         ) : null}
 
-        <div className="mb-5">
-          <PointsSummary
-            points={points}
-            totalStudyTimeSeconds={totalStudyTime}
-            tasksCompleted={tasksCompleted}
-            gardenCount={gardenCount}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <DashboardPage
+                points={points}
+                totalStudyTime={totalStudyTime}
+                tasksCompleted={tasksCompleted}
+                gardenCount={gardenCount}
+                tasks={tasks}
+                isTasksLoading={isTasksLoading}
+                onAddTask={handleAddTask}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onRenameTask={handleRenameTask}
+                remainingSeconds={remainingSeconds}
+                isRunning={isRunning}
+                isSyncingStudyProgress={isSyncingStudyProgress}
+                onStart={start}
+                onPause={pause}
+                onReset={handleResetTimer}
+                timerMinutes={timerMinutes}
+                onSetTimerMinutes={setTimerMinutes}
+              />
+            }
           />
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_1fr_280px]">
-          <TaskSidebar
-            tasks={tasks}
-            isLoading={isTasksLoading}
-            onAddTask={handleAddTask}
-            onToggleTask={handleToggleTask}
-            onDeleteTask={handleDeleteTask}
-            onRenameTask={handleRenameTask}
+          <Route
+            path="/store"
+            element={
+              <GardenStorePage
+                points={points}
+                onPurchase={handlePurchaseFlower}
+                purchasingFlowerId={purchasingFlowerId}
+              />
+            }
           />
-
-          <div className="space-y-5">
-            <StudyTimer
-              remainingSeconds={remainingSeconds}
-              isRunning={isRunning}
-              isSyncing={isSyncingStudyProgress}
-              onStart={start}
-              onPause={pause}
-              onReset={handleResetTimer}
-            />
-            <GardenView gardenItems={gardenItems} isLoading={isGardenLoading} />
-          </div>
-
-          <StorePanel
-            points={points}
-            onPurchase={handlePurchaseFlower}
-            purchasingFlowerId={purchasingFlowerId}
+          <Route
+            path="/garden"
+            element={
+              <YourGardenPage
+                gardenItems={gardenItems}
+                isLoading={isGardenLoading}
+                points={points}
+                onPurchase={handlePurchaseFlower}
+                onPlaceFlower={handlePlaceFlower}
+                onMoveGardenItem={handleMoveGardenItem}
+                purchasingFlowerId={purchasingFlowerId}
+              />
+            }
           />
-        </div>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </main>
+    </>
   )
 }
 

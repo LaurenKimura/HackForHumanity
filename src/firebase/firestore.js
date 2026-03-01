@@ -68,6 +68,7 @@ export const listenToUserProfile = (uid, onData, onError) =>
       const data = snapshot.data()
       onData({
         name: data.name ?? '',
+        displayName: data.name ?? '',
         email: data.email ?? '',
         totalPoints: data.totalPoints ?? 0,
         totalStudyTime: data.totalStudyTime ?? 0,
@@ -76,7 +77,7 @@ export const listenToUserProfile = (uid, onData, onError) =>
     onError,
   )
 
-export const addStudyProgress = async (uid, minutes) => {
+export const addStudyProgress = async (uid, minutes, points) => {
   if (!uid || minutes <= 0) return
 
   const targetRef = userDocRef(uid)
@@ -91,8 +92,30 @@ export const addStudyProgress = async (uid, minutes) => {
       targetRef,
       {
         ...currentData,
-        totalPoints: (currentData.totalPoints ?? 0) + minutes,
+        totalPoints: (currentData.totalPoints ?? 0) + (points ?? 0),
         totalStudyTime: (currentData.totalStudyTime ?? 0) + minutes * 60,
+      },
+      { merge: true },
+    )
+  })
+}
+
+export const addPoints = async (uid, points) => {
+  if (!uid || points <= 0) return
+
+  const targetRef = userDocRef(uid)
+
+  await runTransaction(db, async (transaction) => {
+    const userSnapshot = await transaction.get(targetRef)
+    const currentData = userSnapshot.exists()
+      ? userSnapshot.data()
+      : { ...DEFAULT_PROFILE }
+
+    transaction.set(
+      targetRef,
+      {
+        ...currentData,
+        totalPoints: (currentData.totalPoints ?? 0) + points,
       },
       { merge: true },
     )
@@ -146,7 +169,7 @@ export const listenToGarden = (uid, onData, onError) =>
     onError,
   )
 
-export const purchaseFlower = async (uid, flower) => {
+export const purchaseFlower = async (uid, flower, x, y) => {
   if (!uid) throw new Error('You must be logged in to buy flowers.')
   if (!flower?.id || typeof flower.cost !== 'number') {
     throw new Error('Invalid flower selected.')
@@ -170,9 +193,16 @@ export const purchaseFlower = async (uid, flower) => {
     transaction.update(targetUserRef, { totalPoints: currentPoints - flower.cost })
     transaction.set(nextGardenItemRef, {
       flowerId: flower.id,
+      x: x ?? null,
+      y: y ?? null,
       purchasedAt: serverTimestamp(),
     })
   })
 
   return nextGardenItemRef.id
+}
+
+export const updateGardenItemPosition = async (uid, itemId, x, y) => {
+  if (!uid || !itemId) return
+  await updateDoc(doc(gardenCollectionRef(uid), itemId), { x, y })
 }

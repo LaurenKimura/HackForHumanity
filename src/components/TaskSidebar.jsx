@@ -39,103 +39,210 @@ function TaskSidebar({ tasks, isLoading, onAddTask, onToggleTask, onDeleteTask, 
 
   return (
     <aside
-      className="h-full rounded-2xl bg-white p-4"
-      style={{ border: '1px solid #E8E6E1' }}
+      style={{
+        borderRadius: '24px',
+        padding: '20px',
+        fontFamily: "'Cherry Bomb One', cursive",
+        backgroundColor: 'rgba(255, 255, 255, 0.55)',
+        border: '2px solid rgba(255, 255, 255, 0.7)',
+        backdropFilter: 'blur(8px)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <h2
-        className="text-lg font-semibold"
-        style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#1A1A1A' }}
+        style={{
+          fontSize: '20px',
+          fontWeight: 400,
+          color: '#5C4033',
+          margin: 0,
+        }}
       >
-        To-Do List
+        to-do list
       </h2>
 
-      <form className="mt-4 flex gap-2" onSubmit={handleCreateTask}>
+      <form
+        style={{ display: 'flex', gap: '8px', marginTop: '16px' }}
+        onSubmit={handleCreateTask}
+      >
         <input
-          className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
           style={{
-            borderColor: '#E8E6E1',
-            color: '#1A1A1A',
+            flex: 1,
+            borderRadius: '12px',
+            border: '2px solid #E8DCC8',
+            padding: '8px 12px',
+            fontSize: '14px',
+            fontFamily: "'Cherry Bomb One', cursive",
+            color: '#5C4033',
+            backgroundColor: '#FFFDF8',
+            outline: 'none',
           }}
-          placeholder="Add a task..."
+          placeholder="add a task..."
           value={newTitle}
           onChange={(event) => setNewTitle(event.target.value)}
         />
         <button
-          className="rounded-xl px-3 py-2 text-sm font-medium text-white transition"
-          style={{ backgroundColor: '#1B6B4A' }}
+          style={{
+            borderRadius: '12px',
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontFamily: "'Cherry Bomb One', cursive",
+            fontWeight: 400,
+            color: '#fff',
+            backgroundColor: '#6B7A3D',
+            border: 'none',
+            cursor: 'pointer',
+          }}
           type="submit"
         >
-          Add
+          add
         </button>
       </form>
 
-      {isLoading ? <p className="mt-4 text-sm" style={{ color: '#7A7A72' }}>Loading tasks...</p> : null}
+      {isLoading ? (
+        <p style={{ marginTop: '16px', fontSize: '14px', color: '#5C4033', opacity: 0.5 }}>
+          loading tasks...
+        </p>
+      ) : null}
       {!isLoading && sortedTasks.length === 0 ? (
-        <p className="mt-4 text-sm" style={{ color: '#7A7A72' }}>No tasks yet. Add your first one.</p>
+        <p style={{ marginTop: '16px', fontSize: '14px', color: '#5C4033', opacity: 0.5 }}>
+          no tasks yet. add your first one!
+        </p>
       ) : null}
 
-      <ul className="mt-4 space-y-2">
+      <ul
+        style={{
+          listStyle: 'none',
+          margin: '16px 0 0 0',
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          flex: 1,
+          overflowY: 'auto',
+        }}
+      >
         {sortedTasks.map((task) => (
           <li
-            className="rounded-xl p-3 text-sm"
-            style={{ backgroundColor: '#F0EFEB' }}
             key={task.id}
+            style={{
+              borderRadius: '12px',
+              padding: '10px 12px',
+              backgroundColor: task.completed ? 'rgba(168, 212, 106, 0.15)' : 'rgba(255, 255, 255, 0.7)',
+              border: `1.5px solid ${task.completed ? '#C9E6A0' : '#E8DCC8'}`,
+            }}
           >
-            <div className="flex items-start gap-2">
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
               <input
                 checked={Boolean(task.completed)}
-                className="mt-1 h-4 w-4 accent-[#1B6B4A]"
                 onChange={() => onToggleTask(task.id, task.completed)}
                 type="checkbox"
+                style={{
+                  marginTop: '3px',
+                  width: '18px',
+                  height: '18px',
+                  accentColor: '#6B7A3D',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
               />
 
-              <div className="min-w-0 flex-1">
+              <div style={{ flex: 1, minWidth: 0 }}>
                 {editingTaskId === task.id ? (
-                  <div className="space-y-2">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <input
-                      className="w-full rounded-lg border px-2 py-1 text-sm outline-none"
-                      style={{ borderColor: '#E8E6E1' }}
+                      style={{
+                        width: '100%',
+                        borderRadius: '8px',
+                        border: '2px solid #C4A76C',
+                        padding: '4px 8px',
+                        fontSize: '14px',
+                        fontFamily: "'Cherry Bomb One', cursive",
+                        color: '#5C4033',
+                        outline: 'none',
+                        backgroundColor: '#FFFDF8',
+                      }}
                       value={editingTitle}
                       onChange={(event) => setEditingTitle(event.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveTaskTitle()
+                        if (e.key === 'Escape') cancelEditing()
+                      }}
                     />
-                    <div className="flex gap-2">
+                    <div style={{ display: 'flex', gap: '6px' }}>
                       <button
-                        className="rounded-lg px-2 py-1 text-xs font-medium text-white"
-                        style={{ backgroundColor: '#1B6B4A' }}
+                        style={{
+                          borderRadius: '8px',
+                          padding: '4px 12px',
+                          fontSize: '12px',
+                          fontFamily: "'Cherry Bomb One', cursive",
+                          color: '#fff',
+                          backgroundColor: '#6B7A3D',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
                         onClick={saveTaskTitle}
                         type="button"
                       >
-                        Save
+                        save
                       </button>
                       <button
-                        className="rounded-lg px-2 py-1 text-xs font-medium"
-                        style={{ backgroundColor: '#E8E6E1', color: '#1A1A1A' }}
+                        style={{
+                          borderRadius: '8px',
+                          padding: '4px 12px',
+                          fontSize: '12px',
+                          fontFamily: "'Cherry Bomb One', cursive",
+                          color: '#5C4033',
+                          backgroundColor: '#E8DCC8',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
                         onClick={cancelEditing}
                         type="button"
                       >
-                        Cancel
+                        cancel
                       </button>
                     </div>
                   </div>
                 ) : (
                   <button
-                    className={`w-full text-left ${task.completed ? 'line-through' : ''}`}
-                    style={{ color: task.completed ? '#AAAA9F' : '#1A1A1A' }}
                     onClick={() => beginEditing(task)}
                     type="button"
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      fontSize: '14px',
+                      fontFamily: "'Cherry Bomb One', cursive",
+                      fontWeight: 400,
+                      color: task.completed ? '#A0996E' : '#5C4033',
+                      textDecoration: task.completed ? 'line-through' : 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     {task.title}
                   </button>
                 )}
               </div>
             </div>
-            <div className="mt-2 flex justify-end">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
               <button
-                className="text-xs font-medium text-rose-600 hover:text-rose-700"
                 onClick={() => onDeleteTask(task.id)}
                 type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontFamily: "'Cherry Bomb One', cursive",
+                  color: '#C47A6C',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
               >
-                Delete
+                delete
               </button>
             </div>
           </li>

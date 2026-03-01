@@ -1,28 +1,51 @@
 import { formatStudyDuration } from '../utils/time'
 
-function PointsSummary({ points, totalStudyTimeSeconds, tasksCompleted, gardenCount }) {
+function PointsSummary({ points, totalStudyTimeSeconds, tasksCompleted }) {
   const stats = [
-    { label: 'Points', value: points, color: '#D4A017' },
-    { label: 'Study Time', value: formatStudyDuration(totalStudyTimeSeconds), color: '#1B6B4A' },
-    { label: 'Tasks Done', value: tasksCompleted, color: '#1A1A1A' },
-    { label: 'Garden', value: gardenCount, color: '#1A1A1A' },
+    { label: 'sprouts', value: points },
+    { label: 'study time', value: formatStudyDuration(totalStudyTimeSeconds) },
+    { label: 'tasks done', value: tasksCompleted },
   ]
 
   return (
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <section
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '12px',
+        fontFamily: "'Cherry Bomb One', cursive",
+      }}
+    >
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-2xl bg-white p-4"
-          style={{ border: '1px solid #E8E6E1' }}
+          style={{
+            borderRadius: '16px',
+            padding: '16px',
+            backgroundColor: 'rgba(255, 255, 255, 0.55)',
+            border: '2px solid rgba(255, 255, 255, 0.7)',
+            textAlign: 'center',
+            backdropFilter: 'blur(8px)',
+          }}
         >
           <p
-            className="text-3xl font-bold"
-            style={{ fontFamily: "'Space Grotesk', sans-serif", color: stat.color }}
+            style={{
+              fontSize: '28px',
+              fontWeight: 400,
+              color: '#5C4033',
+              margin: 0,
+            }}
           >
             {stat.value}
           </p>
-          <p className="mt-1 text-sm font-medium" style={{ color: '#7A7A72' }}>
+          <p
+            style={{
+              fontSize: '12px',
+              color: '#5C4033',
+              opacity: 0.6,
+              margin: '4px 0 0 0',
+            }}
+          >
             {stat.label}
           </p>
         </div>
