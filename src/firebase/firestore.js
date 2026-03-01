@@ -14,9 +14,9 @@ import {
 } from 'firebase/firestore'
 import { db } from './config'
 
-const usersCollectionRef = collection(db, 'users')
+const usersCollectionRef = () => collection(db, 'users')
 
-const userDocRef = (uid) => doc(usersCollectionRef, uid)
+const userDocRef = (uid) => doc(usersCollectionRef(), uid)
 const tasksCollectionRef = (uid) => collection(userDocRef(uid), 'tasks')
 const gardenCollectionRef = (uid) => collection(userDocRef(uid), 'garden')
 
